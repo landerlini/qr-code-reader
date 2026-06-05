@@ -18,7 +18,7 @@ SESSION_SECRET = uuid4().hex
 COOKIE_NAME = "session_token"
 
 
-@app.get("/auth")
+@app.get("/auth", response_class=HTMLResponse)
 def authenticate(
     response: Response,
     credentials: HTTPBasicCredentials = Depends(security),
@@ -47,7 +47,7 @@ def authenticate(
         max_age=3 * 3600,  # 3 hours
         path="/",
     )
-    return {"message": "Authenticated successfully"}
+    return HTMLResponse(content="<h1>Authenticated successfully!</h1>")
 
 
 @app.get("/register/{uid}")
