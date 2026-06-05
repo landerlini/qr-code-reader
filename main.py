@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from fastapi import Cookie, Depends, FastAPI, HTTPException, Response
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 app = FastAPI()
 security = HTTPBasic()
@@ -43,6 +43,9 @@ def authenticate(
         value=SESSION_SECRET,
         httponly=True,
         samesite="strict",
+        secure=True,
+        max_age=3 * 3600,  # 3 hours
+        path="/",
     )
     return {"message": "Authenticated successfully"}
 
@@ -82,7 +85,7 @@ def register(
 def qr(uid: str, session_token: Optional[str] = Cookie(default=None)):
     """Cookie-protected endpoint. No auth header required — validates the session cookie."""
     if not session_token or not secrets.compare_digest(session_token, SESSION_SECRET):
-        raise HTTPException(status_code=403, detail="Not authenticated")
+        return RedirectResponse(url="/auth", status_code=302)
 
     with sqlite3.connect("data.db") as conn:
         cursor = conn.cursor()
@@ -93,13 +96,13 @@ def qr(uid: str, session_token: Optional[str] = Cookie(default=None)):
         if len(rows) == 0:
             return HTMLResponse(content="<h1>Invalid QR code!</h1>")
 
-        for uid, timestamp, counter in cursor:
+        for uid, timestamp, counter in rows:
             if counter > 0:
                 return HTMLResponse(
                     content=f"<h1>Pass {uid} has been used already ({timestamp})</h1>"
                 )
 
-        for uid, counter in cursor:
+        for uid, timestamp, counter in rows:
             cursor.execute(
                 "UPDATE qr_codes SET counter = ? + 1 WHERE uid = ?", (uid, counter)
             )
