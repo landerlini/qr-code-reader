@@ -104,19 +104,18 @@ def qr(uid: str, session_token: Optional[str] = Cookie(default=None)):
             return HTMLResponse(content="<h1>Invalid QR code!</h1>")
 
         for uid, timestamp, counter in rows:
-            if counter > 0:
-                return HTMLResponse(
-                    content=f"<h1>Pass {uid} has been used already ({timestamp})</h1>"
-                )
-
-        for uid, timestamp, counter in rows:
             cursor.execute(
-                "UPDATE qr_codes SET counter = ? + 1 WHERE uid = ?", (uid, counter)
+                "UPDATE qr_codes SET counter = ? + 1 WHERE uid = ?", (counter, uid)
             )
             cursor.execute(
                 "UPDATE qr_codes SET timestamp = CURRENT_TIMESTAMP WHERE uid = ?",
                 (uid,),
             )
             conn.commit()
+
+            if counter > 0:
+                return HTMLResponse(
+                    content=f"<h1>Pass {uid} has been used already ({timestamp})</h1>"
+                )
 
     return HTMLResponse(content="<h1>QR code is valid!</h1>")
