@@ -20,7 +20,6 @@ COOKIE_NAME = "session_token"
 
 @app.get("/auth", response_class=HTMLResponse)
 def authenticate(
-    response: Response,
     credentials: HTTPBasicCredentials = Depends(security),
 ):
     """Basic-Auth protected endpoint. Sets a session cookie on success."""
@@ -38,6 +37,7 @@ def authenticate(
             headers={"WWW-Authenticate": "Basic"},
         )
 
+    response = HTMLResponse(content="<h1>Authenticated successfully!</h1>")
     response.set_cookie(
         key=COOKIE_NAME,
         value=SESSION_SECRET,
@@ -47,7 +47,7 @@ def authenticate(
         max_age=3 * 3600,  # 3 hours
         path="/",
     )
-    return HTMLResponse(content="<h1>Authenticated successfully!</h1>")
+    return response
 
 
 @app.get("/register/{uid}")
