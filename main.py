@@ -48,7 +48,7 @@ def authenticate(
         key=COOKIE_NAME,
         value=SESSION_SECRET,
         httponly=True,
-        samesite="strict",
+        samesite="lax",
         secure=True,
         max_age=3 * 3600,  # 3 hours
         path="/",
