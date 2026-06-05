@@ -24,6 +24,24 @@ logging.basicConfig(
 )
 
 
+def html(status: Literal["ok", "warn", "err", "info"], content: str) -> str:
+    """Helper function to create an HTML response."""
+    color = {
+        "ok": "#66ff66",
+        "warn": "#ffff66",
+        "err": "#ff6666",
+        "info": "#ccffff",
+    }.get(status, "#ffffff")
+
+    return f"""
+        <html>
+            <body bgcolor='{color}'>
+                <h1>{content}</h1>
+            </body>
+        </html>
+    """
+
+
 @app.get("/auth", response_class=HTMLResponse)
 def authenticate(
     credentials: HTTPBasicCredentials = Depends(security),
@@ -43,7 +61,7 @@ def authenticate(
             headers={"WWW-Authenticate": "Basic"},
         )
 
-    response = HTMLResponse(content="<h1>Authenticated successfully!</h1>")
+    response = HTMLResponse(content=html("info", "Authentication successful!"))
     response.set_cookie(
         key=COOKIE_NAME,
         value=SESSION_SECRET,
@@ -101,7 +119,7 @@ def qr(uid: str, session_token: Optional[str] = Cookie(default=None)):
         )
         rows = cursor.fetchall()
         if len(rows) == 0:
-            return HTMLResponse(content="<h1>Invalid QR code!</h1>")
+            return HTMLResponse(content=html("err", "Invalid QR code!"))
 
         for uid, timestamp, counter in rows:
             cursor.execute(
@@ -115,7 +133,10 @@ def qr(uid: str, session_token: Optional[str] = Cookie(default=None)):
 
             if counter > 0:
                 return HTMLResponse(
-                    content=f"<h1>Pass {uid} has been used already ({timestamp})</h1>"
+                    content=html(
+                        "warn",
+                        f"Pass {uid} has been used already {counter} times! Latest use: {timestamp}",
+                    )
                 )
 
-    return HTMLResponse(content="<h1>QR code is valid!</h1>")
+    return HTMLResponse(content=html("ok", "QR code is valid!"))
