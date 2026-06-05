@@ -4,6 +4,7 @@ import sqlite3
 import secrets
 from typing import Optional
 from uuid import uuid4
+from typing import Literal
 
 from fastapi import Cookie, Depends, FastAPI, HTTPException, Response
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
