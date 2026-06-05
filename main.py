@@ -1,4 +1,5 @@
 import os
+import logging
 import sqlite3
 import secrets
 from typing import Optional
@@ -16,6 +17,11 @@ USERNAME = os.environ["AUTH_USERNAME"]
 PASSWORD = os.environ["AUTH_PASSWORD"]
 SESSION_SECRET = uuid4().hex
 COOKIE_NAME = "session_token"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
 
 
 @app.get("/auth", response_class=HTMLResponse)
@@ -85,6 +91,7 @@ def register(
 def qr(uid: str, session_token: Optional[str] = Cookie(default=None)):
     """Cookie-protected endpoint. No auth header required — validates the session cookie."""
     if not session_token or not secrets.compare_digest(session_token, SESSION_SECRET):
+        logging.warning("Unauthorized access attempt to /qr/%s", uid)
         return RedirectResponse(url="/auth", status_code=302)
 
     with sqlite3.connect("data.db") as conn:
